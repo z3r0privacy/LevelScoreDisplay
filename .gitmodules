@@ -1,0 +1,3 @@
+[submodule "UI"]
+	path = UI
+	url = https://gitlab.fhnw.ch/robin.schoch/game-master-michi
