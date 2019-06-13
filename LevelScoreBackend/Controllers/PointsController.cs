@@ -46,9 +46,10 @@ namespace LevelScoreBackend.Controllers
                 }
                 team.CurrentPoints = newPoints;
 
-                // TODO: notify signalr
                 var vu = ViewUpdate.Create(team);
-                await _hubCtx.Clients.All.SendAsync("update_one", vu);
+                var notifyTask = _hubCtx.Clients.All.SendAsync("update_one", vu);
+                Program.DataLogger.TeamsChanged();
+                await notifyTask;
             }
             finally
             {

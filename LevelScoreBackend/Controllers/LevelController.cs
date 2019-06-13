@@ -66,7 +66,10 @@ namespace LevelScoreBackend.Controllers
                 Program.Levels.Clear();
                 var l = 1;
                 Program.Levels.AddRange(nums.Select(n => new Level { LevelID = l++, PointsRequired = n }));
-                await LevelScoreHub.UpdateAllClientsFull(_hubCtx);
+                
+                var notifyTask = LevelScoreHub.UpdateAllClientsFull(_hubCtx);
+                Program.DataLogger.LevelsChanged();
+                await notifyTask;
             }
             finally
             {

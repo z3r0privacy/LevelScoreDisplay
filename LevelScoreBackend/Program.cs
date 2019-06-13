@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore;
@@ -14,11 +15,14 @@ namespace LevelScoreBackend
 {
     public class Program
     {
-
+        public static string AppPath => Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        
         public static List<Level> Levels { get; private set; }
         public static List<Team> Teams { get; private set; }
         public static ReaderWriterLockSlim RWLockLevels { get; private set; }
         public static ReaderWriterLockSlim RWLockTeams { get; private set; }
+        
+        public static Datalogger DataLogger { get; private set; }
 
         public static void Main(string[] args)
         {
@@ -27,6 +31,8 @@ namespace LevelScoreBackend
             Levels = new List<Level>();
             Teams = new List<Team>();
 
+            DataLogger = new Datalogger(Path.Combine(AppPath, "DataLogs", DateTime.Now.ToString("yyyyMMdd_HHmmss")));
+            
             Task.Run(() =>
             {
                 Thread.Sleep(1000);
@@ -56,7 +62,6 @@ namespace LevelScoreBackend
             {
                 CreateWebHostBuilder(args, "http://localhost:5000").Build().Run();
             }
-            
         }
 
         private static IWebHostBuilder CreateWebHostBuilder(string[] args, string url) => 

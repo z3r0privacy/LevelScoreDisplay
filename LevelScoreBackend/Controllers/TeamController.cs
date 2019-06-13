@@ -39,7 +39,10 @@ namespace LevelScoreBackend.Controllers
                 }
                 var team = new Team { CurrentPoints = 0, Name = teamName, ID = Program.Teams.Max(t => t.ID, 0)+1 };
                 Program.Teams.Add(team);
-                await LevelScoreHub.UpdateAllClientsFull(_hubCtx);
+                
+                var notifyTask = LevelScoreHub.UpdateAllClientsFull(_hubCtx);
+                Program.DataLogger.TeamsChanged();
+                await notifyTask;
             }
             finally
             {
@@ -64,7 +67,11 @@ namespace LevelScoreBackend.Controllers
                     return NotFound();
                 }
                 Program.Teams.Remove(team);
-                await LevelScoreHub.UpdateAllClientsFull(_hubCtx);
+                
+                
+                var notifyTask = LevelScoreHub.UpdateAllClientsFull(_hubCtx);
+                Program.DataLogger.TeamsChanged();
+                await notifyTask;
             }
             finally
             {
