@@ -30,7 +30,7 @@ namespace LevelScoreBackend
             Task.Run(() =>
             {
                 Thread.Sleep(1000);
-                var ps = new ProcessStartInfo("http://localhost:5000/")
+                var ps = new ProcessStartInfo("http://localhost/")
                 {
                     UseShellExecute = true,
                     Verb = "open"
@@ -40,7 +40,7 @@ namespace LevelScoreBackend
             Task.Run(() =>
             {
                 Thread.Sleep(1000);
-                var ps = new ProcessStartInfo("http://localhost:5000/admin")
+                var ps = new ProcessStartInfo("http://localhost/admin")
                 {
                     UseShellExecute = true,
                     Verb = "open"
@@ -53,7 +53,7 @@ namespace LevelScoreBackend
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-                .UseUrls("http://0.0.0.0:5000")
+                .UseUrls("http://0.0.0.0:80")
                 .UseStartup<Startup>();
     }
 }
