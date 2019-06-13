@@ -48,12 +48,20 @@ namespace LevelScoreBackend
                 Process.Start(ps);
             });
 
-            CreateWebHostBuilder(args).Build().Run();
+            try
+            {
+                CreateWebHostBuilder(args, "http://*:80").Build().Run();
+            }
+            catch (Exception)
+            {
+                CreateWebHostBuilder(args, "http://localhost:5000").Build().Run();
+            }
+            
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
+        private static IWebHostBuilder CreateWebHostBuilder(string[] args, string url) => 
             WebHost.CreateDefaultBuilder(args)
-                .UseUrls("http://0.0.0.0:80")
+                .UseUrls(url)
                 .UseStartup<Startup>();
     }
 }
