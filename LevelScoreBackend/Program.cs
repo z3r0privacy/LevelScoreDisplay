@@ -33,33 +33,40 @@ namespace LevelScoreBackend
             var useSslArg = cmd.Option("-s | --use-ssl <value>", "Use SSL", CommandOptionType.NoValue);
             var certArg = cmd.Option("-c | --certificate <value>", "Path to SSL certificate (pfx)", CommandOptionType.SingleValue);
             var passArg = cmd.Option("-p | --password <value>", "Password for SSL certificate", CommandOptionType.SingleValue);
+            var subjectArg = cmd.Option("-n | --subject-name <value>", "Subject name of certificate from certificate store", CommandOptionType.SingleValue);
             cmd.HelpOption("-? | -h | --help");
 
             cmd.OnExecute(() => {
                 if (!useSslArg.HasValue())
                 {
                     Console.WriteLine("Starting without SSL");
-                    return ParsedMain(false, null, null);
+                    return ParsedMain(false, false, null, null);
                 }
 
-                if (!certArg.HasValue() || !File.Exists(certArg.Value())) {
-                    Console.WriteLine("Certificate file not defined or file not found");
+                if (!subjectArg.HasValue() && !certArg.HasValue())
+                {
+                    Console.WriteLine("Certificate not specified");
+                    return -3;
+                }
+
+                if (certArg.HasValue() && !File.Exists(certArg.Value())) {
+                    Console.WriteLine("Certificate file not found");
                     return -1;
                 }
 
-                if (!passArg.HasValue())
+                if (!passArg.HasValue() && certArg.HasValue())
                 {
                     Console.WriteLine("Password not specified");
                     return -2;
                 }
 
-                return ParsedMain(true, certArg.Value(), passArg.Value());
+                return ParsedMain(true, subjectArg.HasValue(), subjectArg.HasValue() ? subjectArg.Value() : certArg.Value(), passArg.Value());
             });
 
             return cmd.Execute(args);
         }
 
-        private static int ParsedMain(bool useSsl, string certPath, string pass)
+        private static int ParsedMain(bool useSsl, bool useCertStore, string certID, string pass)
         {
             RWLockLevels = new ReaderWriterLockSlim();
             RWLockTeams = new ReaderWriterLockSlim();
@@ -73,13 +80,20 @@ namespace LevelScoreBackend
 
             if (useSsl)
             {
-                cert = new X509Certificate2(certPath, pass);
+                if (useCertStore)
+                {
+                    cert = GetCertificateFromStore(certID);
+                }
+                else
+                {
+                    cert = new X509Certificate2(certID, pass);
+                } 
                 port = 443;
             }
 
             try
             {
-                using (var test = CreateWebHostBuilder(IPAddress.Any, port, cert).Build()) //.Run();
+                using (var test = CreateWebHostBuilder(IPAddress.Any, port, useSsl, cert).Build()) //.Run();
                 {
                     var task = test.RunAsync();
 
@@ -104,24 +118,40 @@ namespace LevelScoreBackend
             {
                 Console.WriteLine("Could not use specified configuration. Using fallback at localhost:5000");
                 Console.WriteLine(e.ToString());
-                CreateWebHostBuilder(IPAddress.Loopback, 5000, null).Build().Run();
+                CreateWebHostBuilder(IPAddress.Loopback, 5000, false, null).Build().Run();
             }
 
             return 0;
         }
 
-        private static IWebHostBuilder CreateWebHostBuilder(IPAddress bindAddr, int port, X509Certificate2 certificate) =>
+        private static IWebHostBuilder CreateWebHostBuilder(IPAddress bindAddr, int port, bool useSsl, X509Certificate2 certificate = null) =>
             WebHost.CreateDefaultBuilder()
                 .UseKestrel(options =>
                 {
                     options.Listen(bindAddr, port, listenOptions =>
                     {
-                        if (certificate != null)
+                        if (useSsl)
                         {
                             listenOptions.UseHttps(certificate);
                         }
                     });
                 })
                 .UseStartup<Startup>();
+
+        private static X509Certificate2 GetCertificateFromStore(string subject)
+        {
+            var store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
+            try
+            {
+                store.Open(OpenFlags.ReadOnly);
+                var certCollection = store.Certificates;
+                var currentCerts = certCollection.Find(X509FindType.FindBySubjectDistinguishedName, "CN="+subject, false);
+                return currentCerts.Count == 0 ? null : currentCerts[0];
+            }
+            finally
+            {
+                store.Close();
+            }
+        }
     }
 }
