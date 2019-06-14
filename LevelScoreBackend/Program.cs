@@ -145,6 +145,10 @@ namespace LevelScoreBackend
                             listenOptions.UseHttps(certificate);
                         }
                     });
+                    if (useSsl)
+                    {
+                        options.Listen(bindAddr, 80);
+                    }
                 })
                 .UseStartup<Startup>();
 

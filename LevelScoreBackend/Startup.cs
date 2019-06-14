@@ -48,6 +48,8 @@ namespace LevelScoreBackend
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseHttpsRedirection();
+
             app.UseAuthentication();
 
             app.UseMvc();
