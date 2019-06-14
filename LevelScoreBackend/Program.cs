@@ -27,6 +27,8 @@ namespace LevelScoreBackend
         
         public static Datalogger DataLogger { get; private set; }
 
+        internal static string AdminPassword { get; private set; }
+
         public static int Main(string[] args)
         {
             var cmd = new CommandLineApplication();
@@ -34,9 +36,17 @@ namespace LevelScoreBackend
             var certArg = cmd.Option("-c | --certificate <value>", "Path to SSL certificate (pfx)", CommandOptionType.SingleValue);
             var passArg = cmd.Option("-p | --password <value>", "Password for SSL certificate", CommandOptionType.SingleValue);
             var subjectArg = cmd.Option("-n | --subject-name <value>", "Subject name of certificate from certificate store", CommandOptionType.SingleValue);
+            var adminPasswordArg = cmd.Option("-a | --admin-password <value>", "Password needed to enter admin section", CommandOptionType.SingleValue);
             cmd.HelpOption("-? | -h | --help");
 
             cmd.OnExecute(() => {
+                if (!adminPasswordArg.HasValue() || string.IsNullOrEmpty(adminPasswordArg.Value()))
+                {
+                    Console.WriteLine("No password for admin section defined");
+                    return -4;
+                }
+                AdminPassword = adminPasswordArg.Value();
+
                 if (!useSslArg.HasValue())
                 {
                     Console.WriteLine("Starting without SSL");
@@ -103,13 +113,13 @@ namespace LevelScoreBackend
                         UseShellExecute = true,
                         Verb = "open"
                     };
-                    Process.Start(ps1);
+                    //Process.Start(ps1);
                     var ps2 = new ProcessStartInfo(url + "admin/")
                     {
                         UseShellExecute = true,
                         Verb = "open"
                     };
-                    Process.Start(ps2);
+                    //Process.Start(ps2);
 
                     task.Wait();
                 }

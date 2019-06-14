@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -16,7 +19,7 @@ namespace LevelScoreBackend
             _next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context)
+        public async Task InvokeAsync(HttpContext context, IAuthenticationService authService)
         {
             await _next.Invoke(context);
 
@@ -24,6 +27,16 @@ namespace LevelScoreBackend
                 && !context.Request.Path.Value.StartsWith("/api")
                 && !context.Request.Path.Value.StartsWith("/updates"))
             {
+                if (context.Request.Path.Value.ToLower().StartsWith("/admin"))
+                {
+                    var authRes = await authService.AuthenticateAsync(context, CookieAuthenticationDefaults.AuthenticationScheme);
+                    if (!authRes.Succeeded)
+                    {
+                        context.Response.StatusCode = 301;
+                        context.Response.Headers.Add("Location", "/login");
+                        return;
+                    }
+                }
                 context.Request.Path = new PathString("/index.html");
                 await _next.Invoke(context);
             }
