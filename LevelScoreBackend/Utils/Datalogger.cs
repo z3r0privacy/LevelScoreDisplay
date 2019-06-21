@@ -3,7 +3,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 
-namespace LevelScoreBackend
+namespace LevelScoreBackend.Utils
 {
     public class Datalogger
     {
@@ -41,23 +41,11 @@ namespace LevelScoreBackend
         {
             lock (lockTeams)
             {
-                Action final = () => { };
-                
-                try
+                using (new RWLockHelper(Program.RWLockTeams, RWLockHelper.LockMode.Read))
                 {
-                    if (!(Program.RWLockTeams.IsReadLockHeld || Program.RWLockTeams.IsWriteLockHeld))
-                    {
-                        Program.RWLockTeams.EnterReadLock();
-                        final = () => { Program.RWLockTeams.ExitReadLock(); };
-                    }
-                    
                     ++_teamUpdateCounter;
                     File.WriteAllText(Path.Combine(_logPathTeams, $"{_teamUpdateCounter}.json"), 
                         JsonConvert.SerializeObject(Program.Teams));
-                }
-                finally
-                {
-                    final();
                 }
             }
         }
@@ -66,23 +54,11 @@ namespace LevelScoreBackend
         {
             lock (lockLevels)
             {
-                Action final = () => { };
-                
-                try
+                using (new RWLockHelper(Program.RWLockLevels, RWLockHelper.LockMode.Read))
                 {
-                    if (!(Program.RWLockLevels.IsReadLockHeld || Program.RWLockLevels.IsWriteLockHeld))
-                    {
-                        Program.RWLockLevels.EnterReadLock();
-                        final = () => { Program.RWLockLevels.ExitReadLock(); };
-                    }
-                    
                     ++_levelUpdateCounter;
                     File.WriteAllText(Path.Combine(_logPathLevels, $"{_levelUpdateCounter}.json"), 
                         JsonConvert.SerializeObject(Program.Levels));
-                }
-                finally
-                {
-                    final();
                 }
             }
         }

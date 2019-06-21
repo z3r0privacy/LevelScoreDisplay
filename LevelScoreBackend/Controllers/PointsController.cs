@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using LevelScoreBackend.SignalR;
+using LevelScoreBackend.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using System;
@@ -33,9 +35,8 @@ namespace LevelScoreBackend.Controllers
                 return BadRequest("Enter a positive number to add points or a negative number to remove points");
             }
             
-            try
+            using(new RWLockHelper(Program.RWLockTeams, RWLockHelper.LockMode.Write))
             {
-                Program.RWLockTeams.EnterWriteLock();
                 var team = Program.Teams.FirstOrDefault(t => t.ID == teamId);
                 if (team == null)
                 {
@@ -48,14 +49,9 @@ namespace LevelScoreBackend.Controllers
                 }
                 team.CurrentPoints = newPoints;
 
-                var vu = ViewUpdate.Create(team);
-                var notifyTask = _hubCtx.Clients.All.SendAsync("update_one", vu);
+                var notifyTask = LevelScoreHub.UpdateAllClientsTeamChanged(_hubCtx, team);
                 Program.DataLogger.TeamsChanged();
                 await notifyTask;
-            }
-            finally
-            {
-                Program.RWLockTeams.ExitWriteLock();
             }
             return Ok();
         }

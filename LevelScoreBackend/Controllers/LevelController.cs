@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using LevelScoreBackend.SignalR;
+using LevelScoreBackend.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using System;
@@ -23,19 +25,14 @@ namespace LevelScoreBackend.Controllers
         [HttpGet]
         public ActionResult GetLevels()
         {
-            try
+            using (new RWLockHelper(Program.RWLockLevels, RWLockHelper.LockMode.Read))
             {
-                Program.RWLockLevels.EnterReadLock();
                 if (Program.Levels.Count == 0)
                 {
                     return Ok("");
                 }
                 var levels = Program.Levels.Select(l => l.PointsRequired.ToString()).Aggregate((a, b) => $"{a},{b}");
                 return Ok(levels);
-            }
-            finally
-            {
-                Program.RWLockLevels.ExitReadLock();
             }
         }
 
@@ -63,9 +60,8 @@ namespace LevelScoreBackend.Controllers
                 }
             }
 
-            try
+            using (new RWLockHelper(Program.RWLockLevels, RWLockHelper.LockMode.Write))
             {
-                Program.RWLockLevels.EnterWriteLock();
                 Program.Levels.Clear();
                 var l = 1;
                 Program.Levels.AddRange(nums.Select(n => new Level { LevelID = l++, PointsRequired = n }));
@@ -73,10 +69,6 @@ namespace LevelScoreBackend.Controllers
                 var notifyTask = LevelScoreHub.UpdateAllClientsFull(_hubCtx);
                 Program.DataLogger.LevelsChanged();
                 await notifyTask;
-            }
-            finally
-            {
-                Program.RWLockLevels.ExitWriteLock();
             }
 
             return Ok();

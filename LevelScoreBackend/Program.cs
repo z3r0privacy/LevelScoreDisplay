@@ -8,10 +8,12 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using LevelScoreBackend.Utils;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace LevelScoreBackend
@@ -26,6 +28,7 @@ namespace LevelScoreBackend
         public static ReaderWriterLockSlim RWLockTeams { get; private set; }
         
         public static Datalogger DataLogger { get; private set; }
+        public static IServiceProvider ServiceProvider { get; private set; }
 
         internal static string AdminPassword { get; private set; }
 
@@ -79,7 +82,10 @@ namespace LevelScoreBackend
         private static int ParsedMain(bool useSsl, bool useCertStore, string certID, string pass)
         {
             RWLockLevels = new ReaderWriterLockSlim();
+            RWLockLevels.AddTag("RWLS_Levels");
             RWLockTeams = new ReaderWriterLockSlim();
+            RWLockTeams.AddTag("RWLS_Teams");
+
             Levels = new List<Level>();
             Teams = new List<Team>();
 
@@ -103,9 +109,11 @@ namespace LevelScoreBackend
 
             try
             {
-                using (var test = CreateWebHostBuilder(IPAddress.Any, port, useSsl, cert).Build()) //.Run();
+                using (var host = CreateWebHostBuilder(IPAddress.Any, port, useSsl, cert).Build()) //.Run();
                 {
-                    var task = test.RunAsync();
+                    ServiceProvider = host.Services;
+
+                    var task = host.RunAsync();
 
                     var url = (useSsl ? "https" : "http") + "://localhost/";
                     var ps1 = new ProcessStartInfo(url)
