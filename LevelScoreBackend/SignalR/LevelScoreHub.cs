@@ -55,15 +55,15 @@ namespace LevelScoreBackend.SignalR
         public override async Task OnConnectedAsync()
         {
             Console.WriteLine($"Client {Clients.Caller} connected");
-            await Clients.Caller.SendAsync("update_title", "Technorama Reisespiel");
+            var t1 = Clients.Caller.SendAsync("update_title", "Technorama Reisespiel");
 
-            //using (new RWLockHelper(Program.RWLockTeams, RWLockHelper.LockMode.Read))
-            //{
-            //    var allList = Program.Teams.Select(t => ViewUpdate.Create(t)).ToList();
-            //    var t2 = Clients.Caller.SendAsync("update_all", allList);
-            //    await t2;
-            //}
-            //await t1;
+            using (new RWLockHelper(Program.RWLockTeams, RWLockHelper.LockMode.Read))
+            {
+                var allList = Program.Teams.Select(t => ViewUpdate.Create(t)).ToList();
+                var t2 = Clients.Caller.SendAsync("update_all", allList);
+                await t2;
+            }
+            await t1;
         }
     }
 }

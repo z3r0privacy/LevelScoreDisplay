@@ -45,10 +45,23 @@ namespace LevelScoreBackend.Controllers
         }
 
         [HttpPost("logout")]
+        [AllowAnonymous]
         public async Task<ActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Ok("Logged Out");
+        }
+
+        [HttpGet("state")]
+        [AllowAnonymous]
+        public ActionResult CheckState()
+        {
+            var u = HttpContext.User;
+            return Ok(new
+            {
+                IsAuthenticated = u.Identity.IsAuthenticated,
+                IsAdmin = u.Claims.Count(c => c.Type == PasswordBasedLoginProvider.IS_ADMIN_CLAIM_TYPE && c.Value == "yes") == 1
+            });
         }
     }
 }

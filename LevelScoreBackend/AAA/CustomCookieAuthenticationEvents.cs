@@ -13,8 +13,7 @@ namespace LevelScoreBackend.AAA
     {
         public override async Task ValidatePrincipal(CookieValidatePrincipalContext context)
         {
-            var data = context.Principal.Claims.FirstOrDefault(c => c.Type == PasswordBasedLoginProvider.SERVER_START_TIME_CLAIM_TYPE);
-            if (!long.TryParse(data?.Value, out var dt) || dt != Program.StartTime)
+            if (context.Principal.Claims.FirstOrDefault(c => c.Type == PasswordBasedLoginProvider.SERVER_START_TIME_CLAIM_TYPE) == null)
             {
                 context.RejectPrincipal();
                 await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
