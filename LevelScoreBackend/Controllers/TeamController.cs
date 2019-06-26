@@ -24,6 +24,7 @@ namespace LevelScoreBackend.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "Admin")]
         public async Task<ActionResult> AddTeam([FromBody]string teamName)
         {
             if (!ModelState.IsValid)
@@ -54,6 +55,7 @@ namespace LevelScoreBackend.Controllers
         }
 
         [HttpDelete("{id:min(1)}")]
+        [Authorize(Policy = "Admin")]
         public async Task<ActionResult> RemoveTeam(int id)
         {
             if (!ModelState.IsValid)

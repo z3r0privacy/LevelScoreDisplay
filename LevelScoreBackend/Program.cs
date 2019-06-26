@@ -30,6 +30,9 @@ namespace LevelScoreBackend
         public static Datalogger DataLogger { get; private set; }
         public static IServiceProvider ServiceProvider { get; private set; }
 
+        public static long StartTime { get; private set; }
+
+        internal static string LeiterPassword { get; private set; }
         internal static string AdminPassword { get; private set; }
 
         public static int Main(string[] args)
@@ -39,16 +42,24 @@ namespace LevelScoreBackend
             var certArg = cmd.Option("-c | --certificate <value>", "Path to SSL certificate (pfx)", CommandOptionType.SingleValue);
             var passArg = cmd.Option("-p | --password <value>", "Password for SSL certificate", CommandOptionType.SingleValue);
             var subjectArg = cmd.Option("-n | --subject-name <value>", "Subject name of certificate from certificate store", CommandOptionType.SingleValue);
-            var adminPasswordArg = cmd.Option("-a | --admin-password <value>", "Password needed to enter admin section", CommandOptionType.SingleValue);
+            var leiterPassword = cmd.Option("-l | --leiter-password <value>", "Password needed to enter leiter section", CommandOptionType.SingleValue);
+            var adminPassword = cmd.Option("-a | --admin-password <value>", "Password needed to enter admin section", CommandOptionType.SingleValue);
             cmd.HelpOption("-? | -h | --help");
 
             cmd.OnExecute(() => {
-                if (!adminPasswordArg.HasValue() || string.IsNullOrEmpty(adminPasswordArg.Value()))
+                if (!leiterPassword.HasValue() || string.IsNullOrEmpty(leiterPassword.Value()))
                 {
-                    Console.WriteLine("No password for admin section defined");
+                    Console.WriteLine("No password for leiter section defined");
                     return -4;
                 }
-                AdminPassword = adminPasswordArg.Value();
+                LeiterPassword = leiterPassword.Value();
+
+                if (!adminPassword.HasValue() || string.IsNullOrEmpty(adminPassword.Value()))
+                {
+                    Console.WriteLine("No password for admin section defined");
+                    return -5;
+                }
+                AdminPassword = adminPassword.Value();
 
                 if (!useSslArg.HasValue())
                 {
@@ -113,6 +124,7 @@ namespace LevelScoreBackend
                 {
                     ServiceProvider = host.Services;
 
+                    StartTime = DateTime.Now.Ticks;
                     var task = host.RunAsync();
 
                     var url = (useSsl ? "https" : "http") + "://localhost/";

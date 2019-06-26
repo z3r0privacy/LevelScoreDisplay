@@ -37,6 +37,7 @@ namespace LevelScoreBackend.Controllers
         }
 
         [HttpPut]
+        [Authorize(Policy = "Admin")]
         public async Task<ActionResult> SetLevel([FromBody]string levels)
         {
             if (!ModelState.IsValid)
