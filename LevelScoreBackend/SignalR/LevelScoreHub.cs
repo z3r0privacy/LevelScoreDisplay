@@ -42,18 +42,28 @@ namespace LevelScoreBackend.SignalR
             }
         }
 
+        [HubMethodName("request_all")]
+        public async Task RequestAllData()
+        {
+            using (new RWLockHelper(Program.RWLockTeams, RWLockHelper.LockMode.Read))
+            {
+                var allVU = Program.Teams.Select(t => ViewUpdate.Create(t)).ToList();
+                await Clients.Caller.SendAsync("update_all", allVU);
+            }
+        }
+
         public override async Task OnConnectedAsync()
         {
             Console.WriteLine($"Client {Clients.Caller} connected");
-            var t1 = Clients.Caller.SendAsync("update_title", "Technorama Reisespiel");
+            await Clients.Caller.SendAsync("update_title", "Technorama Reisespiel");
 
-            using (new RWLockHelper(Program.RWLockTeams, RWLockHelper.LockMode.Read))
-            {
-                var allList = Program.Teams.Select(t => ViewUpdate.Create(t)).ToList();
-                var t2 = Clients.Caller.SendAsync("update_all", allList);
-                await t2;
-            }
-            await t1;
+            //using (new RWLockHelper(Program.RWLockTeams, RWLockHelper.LockMode.Read))
+            //{
+            //    var allList = Program.Teams.Select(t => ViewUpdate.Create(t)).ToList();
+            //    var t2 = Clients.Caller.SendAsync("update_all", allList);
+            //    await t2;
+            //}
+            //await t1;
         }
     }
 }
