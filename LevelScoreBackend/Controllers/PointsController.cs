@@ -1,4 +1,5 @@
-﻿using LevelScoreBackend.SignalR;
+﻿using LevelScoreBackend.AAA;
+using LevelScoreBackend.SignalR;
 using LevelScoreBackend.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -35,6 +36,11 @@ namespace LevelScoreBackend.Controllers
                 return BadRequest("Enter a positive number to add points or a negative number to remove points");
             }
             
+            if (points < 0 && !User.HasClaim(c => c.Type == PasswordBasedLoginProvider.IS_ADMIN_CLAIM_TYPE && c.Value == "yes"))
+            {
+                return Forbid();
+            }
+
             using(new RWLockHelper(Program.RWLockTeams, RWLockHelper.LockMode.Write))
             {
                 var team = Program.Teams.FirstOrDefault(t => t.ID == teamId);
