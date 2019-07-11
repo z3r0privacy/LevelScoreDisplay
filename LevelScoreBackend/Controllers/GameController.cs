@@ -13,16 +13,39 @@ namespace LevelScoreBackend.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class LevelController : ControllerBase
+    public class GameController : ControllerBase
     {
         private IHubContext<LevelScoreHub> _hubCtx;
 
-        public LevelController(IHubContext<LevelScoreHub> hubCtx)
+        public GameController(IHubContext<LevelScoreHub> hubCtx)
         {
             _hubCtx = hubCtx;
         }
 
-        [HttpGet]
+        [HttpGet("title")]
+        public ActionResult GetTitle()
+        {
+            return Ok(Program.GameTitle);
+        }
+
+        [HttpPut("title")]
+        [Authorize(Policy = "Admin")]
+        public async Task<ActionResult> UpdateTitle([FromBody]string title)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                return BadRequest("Title cannot be empty");
+            }
+            Program.GameTitle = title;
+            await LevelScoreHub.SetNewTitle(_hubCtx);
+            return Ok();
+        }
+
+        [HttpGet("levels")]
         public ActionResult GetLevels()
         {
             using (new RWLockHelper(Program.RWLockLevels, RWLockHelper.LockMode.Read))
@@ -36,7 +59,7 @@ namespace LevelScoreBackend.Controllers
             }
         }
 
-        [HttpPut]
+        [HttpPut("levels")]
         [Authorize(Policy = "Admin")]
         public async Task<ActionResult> SetLevel([FromBody]string levels)
         {

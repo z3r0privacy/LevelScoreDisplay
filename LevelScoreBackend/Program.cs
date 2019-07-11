@@ -34,6 +34,7 @@ namespace LevelScoreBackend
 
         internal static string LeiterPassword { get; private set; }
         internal static string AdminPassword { get; private set; }
+        public static string GameTitle { get; set; }
 
         public static int Main(string[] args)
         {
@@ -117,6 +118,8 @@ namespace LevelScoreBackend
                 } 
                 port = 443;
             }
+
+            GameTitle = "LevelScore Display";
 
             try
             {

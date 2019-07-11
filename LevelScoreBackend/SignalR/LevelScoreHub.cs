@@ -52,10 +52,15 @@ namespace LevelScoreBackend.SignalR
             }
         }
 
+        public static async Task SetNewTitle(IHubContext<LevelScoreHub> ctx)
+        {
+            await ctx.Clients.All.SendAsync("update_title", Program.GameTitle);
+        }
+
         public override async Task OnConnectedAsync()
         {
             Console.WriteLine($"Client {Clients.Caller} connected");
-            var t1 = Clients.Caller.SendAsync("update_title", "Technorama Reisespiel");
+            var t1 = Clients.Caller.SendAsync("update_title", Program.GameTitle);
 
             using (new RWLockHelper(Program.RWLockTeams, RWLockHelper.LockMode.Read))
             {
